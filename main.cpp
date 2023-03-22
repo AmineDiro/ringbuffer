@@ -1,27 +1,35 @@
 #include <iostream>
 #include "ringbuffer.h"
 
-#define BUFFER_SIZE 16
+#define BUFFER_SIZE 4096
+#define RAND_MAX 255 
 
 int main()
 {
     auto ring = RingBuffer(BUFFER_SIZE);
     std::cout << "Created Ring" << std::endl;
 
-    u_int8_t data[2] = {1, 3};
-    for (size_t i = 0; i < BUFFER_SIZE/2; i++)
+    u_int8_t data[BUFFER_SIZE];
+    for (int i = 0; i < BUFFER_SIZE; i++)
     {
-        auto res = ring.Put(data, 2);
+        data[i] = rand() % 100;
     }
+    ring.Put(data, BUFFER_SIZE);
+
+    // First 3ammer lbuffer
+    std::cout << "After PUT" << std::endl;
     ring.PrintBuffer();
 
-    auto _ = ring.Get(BUFFER_SIZE);
+    // 9rah
+    ring.Get(BUFFER_SIZE);
+    std::cout << "After Read" << std::endl;
 
-    u_int8_t data_[2] = {0, 0};
-    for (size_t i = 0; i < BUFFER_SIZE/2-1; i++)
-    {
-        auto res = ring.Put(data_, 2);
-    }
+    ring.PrintBuffer();
 
+    //  Put marra khra
+    u_int8_t data_[2] = {1, 1};
+    ring.Put(data_, 2);
+
+    std::cout << "After PUT" << std::endl;
     ring.PrintBuffer();
 }

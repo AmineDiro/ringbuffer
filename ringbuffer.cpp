@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -10,12 +11,18 @@
 
 RingBuffer::RingBuffer(size_t size)
 {
+    if (size % getpagesize() != 0)
+    {
+        fprintf(stderr, "Can't create the queue ");
+        fprintf(stderr, "\n");
+        abort();
+    }
     bufferSize = size;
     // allocate the buffer
     int fileno = memfd_create("ringbuffer", 0);
     ftruncate(fileno, size);
     // Ask mmap for an address at a location where we can put both virtual copies of the buffer
-    buffer = (u_int8_t *)mmap(NULL, 2 * size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    buffer = (u_int8_t *)mmap(NULL, 2 * size, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
     // Map the buffer at that address
     mmap(buffer, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fileno, 0);
@@ -40,8 +47,9 @@ int RingBuffer::Put(u_int8_t *data, size_t dataSize)
 
 void RingBuffer::PrintBuffer()
 {
+    // Checks only the beginning to see if we wrap around
     std::cout << "readPointer " << readPointer << " writePointer " << writePointer << std::endl;
-    for (size_t i = 0; i < bufferSize; i++)
+    for (size_t i = 0; i < 10; i++)
     {
         printf("%d", buffer[i]);
     }
@@ -56,5 +64,5 @@ u_int8_t *RingBuffer::Get(size_t length)
     }
 
     readPointer += length;
-    return NULL ;
+    return NULL;
 }
