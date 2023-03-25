@@ -7,7 +7,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include "ringbuffer.h"
 
 RingBuffer::RingBuffer(size_t size)
 {
