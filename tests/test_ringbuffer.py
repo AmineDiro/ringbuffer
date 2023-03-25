@@ -11,8 +11,8 @@ def test_init():
 
 
 def test_put():
-    N = 1024
+    n = 1024
     ring = RingBuffer(size)
-    res = ring.put(os.urandom(N), N)
+    res = ring.put(os.urandom(n), n)
 
-    assert res == N
+    assert res == n
