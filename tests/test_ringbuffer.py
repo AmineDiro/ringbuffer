@@ -1,5 +1,6 @@
 import os
-from re import I
+
+import pytest
 
 from pyringbuffer import RingBuffer
 
@@ -14,19 +15,14 @@ def test_init():
 
 
 def test_put():
-    n = 1024
     ring = RingBuffer(size)
-    res = ring.put(os.urandom(n), n)
-
-    assert res == n
-
-
-def test_print_buffer():
-    ring = RingBuffer(size)
-    n = 1024
+    n = 4096
     ring.put(os.urandom(n), n)
-    ring.print(size)
-    pass
+    assert ring.write_idx == n
+    assert ring.read_idx == 0
+
+    with pytest.raises(IndexError):
+        ring.put(os.urandom(n), n)
 
 
 def test_get_buffer():
@@ -35,7 +31,10 @@ def test_get_buffer():
     src = os.urandom(n)
 
     ring.put(src, n)
-    result = ring.get(n)
+    result: memoryview = ring.get(n)
 
-    assert src == result
+    assert src == result.tobytes()
     assert len(result) == n
+
+    with pytest.raises(ValueError):
+        result = ring.get(n)

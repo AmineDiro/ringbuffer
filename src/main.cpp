@@ -63,7 +63,7 @@ public:
 
         if (bufferSize - (writePointer - readPointer) < dataSize)
         {
-            printf("ERROR\n");
+            throw std::out_of_range("RingBuffer is full, read some data if you want to write more.");
             return -1;
         }
 
@@ -72,15 +72,17 @@ public:
 
         return dataSize;
     };
+
     py::memoryview Get(size_t length)
     {
-        // char resultData[length];
-        if (readPointer - writePointer < length)
+        if (writePointer-readPointer < length)
         {
             throw std::range_error("cant't read for now");
         }
+        auto membuffer = py::memoryview::from_memory(buffer + readPointer, length);
+        readPointer+=static_cast<int>(length);
 
-        return py::memoryview::from_memory(buffer + readPointer, length);
+        return membuffer;
     };
     void PrintBuffer(int limit)
     {
@@ -104,7 +106,20 @@ PYBIND11_MODULE(pyringbuffer, m)
         .def_property_readonly("write_idx", &RingBuffer::GetWritePointer)
         .def("put", &RingBuffer::Put)
         .def("get", &RingBuffer::Get)
-        .def("print", &RingBuffer::PrintBuffer);
+        .def("print", &RingBuffer::PrintBuffer)
+        .def("__repr__",
+        [](RingBuffer &ring) {
+            std::string r("RingBuffer(");
+            r += std::to_string(ring.GetSize());
+            r += ", ";
+            r += "read idx :";
+            r += std::to_string(ring.GetReadPointer());
+            r += ", ";
+            r += "write idx :";
+            r += std::to_string(ring.GetWritePointer());
+            r += ")";
+            return r;
+        });
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
