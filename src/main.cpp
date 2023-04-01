@@ -44,9 +44,18 @@ public:
         mmap(buffer + size, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fileno, 0);
     }
 
-    int GetSize()
+    const int GetSize()
     {
         return bufferSize;
+    };
+
+    const int GetReadPointer()
+    {
+        return readPointer;
+    };
+    const int GetWritePointer()
+    {
+        return writePointer;
     };
 
     int Put(char *data, size_t dataSize)
@@ -90,7 +99,9 @@ PYBIND11_MODULE(pyringbuffer, m)
 {
     py::class_<RingBuffer>(m, "RingBuffer")
         .def(py::init<const size_t>())
-        .def("get_size", &RingBuffer::GetSize)
+        .def_property_readonly("size", &RingBuffer::GetSize)
+        .def_property_readonly("read_idx", &RingBuffer::GetReadPointer)
+        .def_property_readonly("write_idx", &RingBuffer::GetWritePointer)
         .def("put", &RingBuffer::Put)
         .def("get", &RingBuffer::Get)
         .def("print", &RingBuffer::PrintBuffer);

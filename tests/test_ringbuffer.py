@@ -8,7 +8,9 @@ size = 4096
 
 def test_init():
     ring = RingBuffer(size)
-    assert ring.get_size() == size
+    assert ring.size == size
+    assert ring.read_idx == 0
+    assert ring.write_idx == 0
 
 
 def test_put():
