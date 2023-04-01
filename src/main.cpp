@@ -26,9 +26,7 @@ public:
     {
         if (size % getpagesize() != 0)
         {
-            fprintf(stderr, "Can't create the queue ");
-            fprintf(stderr, "\n");
-            abort();
+            throw std::range_error("Please provide a valide buffer size.");
         }
         bufferSize = size;
         // allocate the buffer
@@ -51,23 +49,23 @@ public:
 
     const int GetReadPointer()
     {
-        return readPointer%bufferSize;
+        return readPointer % bufferSize;
     };
     const int GetWritePointer()
     {
-        return writePointer%bufferSize;
+        return writePointer % bufferSize;
     };
 
-    int Put(char *data, size_t dataSize)
+    int Put(const py::bytes data)
     {
+        auto dataSize = py::len(data);
+        const char *ptr= PYBIND11_BYTES_AS_STRING(data.ptr());
 
         if (bufferSize - (writePointer - readPointer) < dataSize)
         {
             throw std::out_of_range("RingBuffer is full, read some data if you want to write more.");
-            return -1;
         }
-
-        memcpy(buffer + writePointer, data, dataSize);
+        memcpy(buffer + writePointer, (void *)ptr, dataSize);
         writePointer += dataSize;
 
         return dataSize;
@@ -75,12 +73,12 @@ public:
 
     py::memoryview Get(size_t length)
     {
-        if (writePointer-readPointer < length)
+        if (writePointer - readPointer < length)
         {
             throw std::range_error("cant't read for now");
         }
         auto membuffer = py::memoryview::from_memory(buffer + readPointer, length);
-        readPointer+=static_cast<int>(length);
+        readPointer += static_cast<int>(length);
         return membuffer;
     };
 };
@@ -95,18 +93,19 @@ PYBIND11_MODULE(pyringbuffer, m)
         .def("put", &RingBuffer::Put)
         .def("get", &RingBuffer::Get)
         .def("__repr__",
-        [](RingBuffer &ring) {
-            std::string r("RingBuffer(");
-            r += std::to_string(ring.GetSize());
-            r += ", ";
-            r += "read idx :";
-            r += std::to_string(ring.GetReadPointer());
-            r += ", ";
-            r += "write idx :";
-            r += std::to_string(ring.GetWritePointer());
-            r += ")";
-            return r;
-        });
+             [](RingBuffer &ring)
+             {
+                 std::string r("RingBuffer(");
+                 r += std::to_string(ring.GetSize());
+                 r += ", ";
+                 r += "read idx :";
+                 r += std::to_string(ring.GetReadPointer());
+                 r += ", ";
+                 r += "write idx :";
+                 r += std::to_string(ring.GetWritePointer());
+                 r += ")";
+                 return r;
+             });
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);

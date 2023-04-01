@@ -16,12 +16,12 @@ def test_init():
 
 def test_put():
     ring = RingBuffer(size)
-    ring.put(os.urandom(size), size)
+    ring.put(os.urandom(size))
     assert ring.write_idx == 0
     assert ring.read_idx == 0
 
     with pytest.raises(IndexError):
-        ring.put(os.urandom(size), size)
+        ring.put(os.urandom(size))
 
 
 def test_get_buffer():
@@ -29,7 +29,7 @@ def test_get_buffer():
     n = 1024
     src = os.urandom(n)
 
-    ring.put(src, n)
+    ring.put(src)
     result: memoryview = ring.get(n)
 
     assert src == result.tobytes()
@@ -43,13 +43,13 @@ def test_multiple_write():
     ring = RingBuffer(size)
     src = os.urandom(size)
 
-    ring.put(src, size)
+    ring.put(src)
     _ = ring.get(size)
     assert ring.write_idx == 0
     assert ring.read_idx == 0
 
     n = 1024
-    ring.put(src[:n], n)
+    ring.put(src[:n])
     assert ring.write_idx == n % size
     _ = ring.get(n)
     assert ring.read_idx == n % size
