@@ -59,14 +59,23 @@ public:
     int Put(const py::bytes data)
     {
         auto dataSize = py::len(data);
-        const char *ptr= PYBIND11_BYTES_AS_STRING(data.ptr());
+        // Pybind cast:
+        // https://github.com/pybind/pybind11/blob/438034c5b8a6a8bf82dda7a195e3c00cafe575e0/include/pybind11/cast.h#L477
+        if (PYBIND11_BYTES_CHECK(data.ptr()))
+        {
 
+            const char *ptr = PYBIND11_BYTES_AS_STRING(data.ptr());
+            if (!ptr)
+            {
+                std::length_error("Unexpected PYBIND11_BYTES_AS_STRING() failure.");
+            }
         if (bufferSize - (writePointer - readPointer) < dataSize)
         {
             throw std::out_of_range("RingBuffer is full, read some data if you want to write more.");
         }
         memcpy(buffer + writePointer, (void *)ptr, dataSize);
         writePointer += dataSize;
+        }
 
         return dataSize;
     };
