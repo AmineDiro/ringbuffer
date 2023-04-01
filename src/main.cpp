@@ -12,6 +12,8 @@
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
+namespace py = pybind11;
+
 class RingBuffer
 {
     size_t readPointer = 0;
@@ -20,7 +22,7 @@ class RingBuffer
     char *buffer;
 
 public:
-    RingBuffer(size_t size)
+    RingBuffer(const size_t size)
     {
         if (size % getpagesize() != 0)
         {
@@ -61,35 +63,33 @@ public:
 
         return dataSize;
     };
-    char *Get(size_t length)
+    py::memoryview Get(size_t length)
     {
-
+        // char resultData[length];
         if (readPointer - writePointer < length)
         {
-            return nullptr;
+            throw std::range_error("cant't read for now");
         }
 
-        readPointer += length;
-        return NULL;
+        return py::memoryview::from_memory(buffer + readPointer, length);
     };
-    void PrintBuffer()
+    void PrintBuffer(int limit)
     {
 
         // Checks only the beginning to see if we wrap around
         std::cout << "readPointer " << readPointer << " writePointer " << writePointer << std::endl;
-        for (size_t i = 0; i < 10; i++)
+        for (int i = 0; i < limit; i++)
         {
-            printf("%d", buffer[i]);
+            printf("%c", buffer[i]);
         }
         printf("\n");
     };
 };
 
-namespace py = pybind11;
 PYBIND11_MODULE(pyringbuffer, m)
 {
     py::class_<RingBuffer>(m, "RingBuffer")
-        .def(py::init<size_t>())
+        .def(py::init<const size_t>())
         .def("get_size", &RingBuffer::GetSize)
         .def("put", &RingBuffer::Put)
         .def("get", &RingBuffer::Get)
