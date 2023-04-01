@@ -51,11 +51,11 @@ public:
 
     const int GetReadPointer()
     {
-        return readPointer;
+        return readPointer%bufferSize;
     };
     const int GetWritePointer()
     {
-        return writePointer;
+        return writePointer%bufferSize;
     };
 
     int Put(char *data, size_t dataSize)
@@ -81,19 +81,7 @@ public:
         }
         auto membuffer = py::memoryview::from_memory(buffer + readPointer, length);
         readPointer+=static_cast<int>(length);
-
         return membuffer;
-    };
-    void PrintBuffer(int limit)
-    {
-
-        // Checks only the beginning to see if we wrap around
-        std::cout << "readPointer " << readPointer << " writePointer " << writePointer << std::endl;
-        for (int i = 0; i < limit; i++)
-        {
-            printf("%c", buffer[i]);
-        }
-        printf("\n");
     };
 };
 
@@ -106,7 +94,6 @@ PYBIND11_MODULE(pyringbuffer, m)
         .def_property_readonly("write_idx", &RingBuffer::GetWritePointer)
         .def("put", &RingBuffer::Put)
         .def("get", &RingBuffer::Get)
-        .def("print", &RingBuffer::PrintBuffer)
         .def("__repr__",
         [](RingBuffer &ring) {
             std::string r("RingBuffer(");
